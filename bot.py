@@ -1,8 +1,8 @@
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart,Command
+from aiogram.filters import CommandStart,Command,and_f
 from aiogram import F
-from aiogram.types import Message,InlineKeyboardButton
+from aiogram.types import Message,InlineKeyboardButton,ChatPermissions
 from data import config
 import asyncio
 import logging
@@ -26,7 +26,7 @@ dp = Dispatcher()
 
 
 
-@dp.message(CommandStart())
+@dp.message(CommandStart(),F.chat.func(lambda chat: chat.type == "private"))
 async def start_command(message:Message):
     full_name = message.from_user.full_name
     telegram_id = message.from_user.id
@@ -36,8 +36,76 @@ async def start_command(message:Message):
     except:
         await message.answer(text="Assalomu alaykum")
 
+@dp.message(F.new_chat_member)
+async def new_member(message:Message):
+    user = message.new_chat_member.get("first_name")
+    await message.answer(f"{user} Guruhga xush kelibsiz!")
+    await message.delete()
 
-@dp.message(IsCheckSubChannels())
+@dp.message(F.left_chat_member)
+async def new_member(message:Message):
+    # print(message.new_chat_member)
+    user = message.left_chat_member.full_name
+    await message.answer(f"{user} Xayr!")
+    await message.delete()
+
+@dp.message(and_f(F.reply_to_message,F.text=="/ban"))
+async def ban_user(message:Message):
+    user_id =  message.reply_to_message.from_user.id
+    await message.chat.ban_sender_chat(user_id)
+    await message.answer(f"{message.reply_to_message.from_user.first_name} guruhdan chiqarib yuborildingiz.")
+
+@dp.message(and_f(F.reply_to_message,F.text=="/unban"))
+async def unban_user(message:Message):
+    user_id =  message.reply_to_message.from_user.id
+    await message.chat.unban_sender_chat(user_id)
+    await message.answer(f"{message.reply_to_message.from_user.first_name} guruhga qaytishingiz mumkin.")
+
+
+# @dp.message(and_f(F.chat.func(lambda chat: chat.type == "supergroup"),F.text))
+# async def restrict_minute(message:Message):
+#     user_id =  message.from_user.id
+#     permission = ChatPermissions(can_send_messages=False)
+
+#     until_date = int(time()) + 180 # 3minut guruhga yoza olmaydi
+#     await message.chat.restrict(user_id=user_id,permissions=permission,until_date=until_date)
+    
+
+
+from time import time
+@dp.message(and_f(F.reply_to_message,F.text=="/mute"))
+async def mute_user(message:Message):
+    user_id =  message.reply_to_message.from_user.id
+    permission = ChatPermissions(can_send_messages=False)
+
+    until_date = int(time()) + 60 # 1minut guruhga yoza olmaydi
+    await message.chat.restrict(user_id=user_id,permissions=permission,until_date=until_date)
+    await message.answer(f"{message.reply_to_message.from_user.first_name} 1 minutga blocklandingiz")
+
+@dp.message(and_f(F.reply_to_message,F.text=="/unmute"))
+async def unmute_user(message:Message):
+    user_id =  message.reply_to_message.from_user.id
+    permission = ChatPermissions(can_send_messages=True)
+    await message.chat.restrict(user_id=user_id,permissions=permission)
+    await message.answer(f"{message.reply_to_message.from_user.first_name} guruhga yoza olasiz")
+
+xaqoratli_sozlar = {"tentak","jinni"}
+
+@dp.message(and_f(F.chat.func(lambda chat: chat.type == "supergroup"),F.text ))
+async def tozalash(message:Message):
+    text = message.text
+    for soz in xaqoratli_sozlar:
+        # print(soz,text.lower().find(soz))
+        if text.lower().find(soz)!=-1 :
+            user_id =  message.from_user.id
+            until_date = int(time()) + 60 # 1minut guruhga yoza olmaydi
+            permission = ChatPermissions(can_send_messages=False)
+            await message.chat.restrict(user_id=user_id,permissions=permission,until_date=until_date)
+            await message.answer(text=f"{message.from_user.mention_html()} o'zing {soz}")
+            await message.delete() 
+            break
+
+@dp.message(IsCheckSubChannels(),F.chat.func(lambda chat: chat.type == "private"))
 async def kanalga_obuna(message:Message):
     text = ""
     inline_channel = InlineKeyboardBuilder()
@@ -51,19 +119,19 @@ async def kanalga_obuna(message:Message):
 
 
 #help commands
-@dp.message(Command("help"))
+@dp.message(Command("help"),F.chat.func(lambda chat: chat.type == "private"))
 async def help_commands(message:Message):
     await message.answer("Sizga qanday yordam kerak")
 
 
 
 #about commands
-@dp.message(Command("about"))
+@dp.message(Command("about"),F.chat.func(lambda chat: chat.type == "private"))
 async def about_commands(message:Message):
     await message.answer("Sifat 2024")
 
 
-@dp.message(Command("admin"),IsBotAdminFilter(ADMINS))
+@dp.message(Command("admin"),IsBotAdminFilter(ADMINS),F.chat.func(lambda chat: chat.type == "private"))
 async def is_admin(message:Message):
     await message.answer(text="Admin menu",reply_markup=admin_keyboard.admin_button)
 
