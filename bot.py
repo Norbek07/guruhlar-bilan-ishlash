@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart,Command,and_f
 from aiogram import F
-from aiogram.types import Message,InlineKeyboardButton,ChatPermissions
+from aiogram.types import Message,InlineKeyboardButton,ChatPermissions,input_file
 from data import config
 import asyncio
 import logging
@@ -24,6 +24,31 @@ CHANNELS = config.CHANNELS
 dp = Dispatcher()
 
 
+# @dp.message(F.text)
+# async def nimadur(message:Message):
+#     group_title = message.chat
+#     print(group_title)
+# @dp.message(F.text.startswith("/settittle"))
+# async def set_title_group(message:Message):
+#     new_tile = message.text.split("/settittle")[1]
+#     new_tile = "Sifat 3 | Telegram bot"
+#     # print(type(new_tile))
+#     # print(new_tile)
+#     try:  
+#         await message.chat.set_title(new_tile)
+#     except:
+#         await message.answer("Guruh nomini xato yozdingiz")
+
+
+@dp.message(and_f(F.reply_to_message.photo,F.text=="/setphoto"))
+async def setphoto_group(message:Message):
+    photo =  message.reply_to_message.photo[-1].file_id
+    file = await bot.get_file(photo)
+    file_path = file.file_path
+    file = await bot.download_file(file_path)
+    file = file.read()
+    await message.chat.set_photo(photo=input_file.BufferedInputFile(file=file,filename="asd.jpg"))
+    await message.answer("Gruh rasmi uzgardi")
 
 
 @dp.message(CommandStart(),F.chat.func(lambda chat: chat.type == "private"))
@@ -36,10 +61,12 @@ async def start_command(message:Message):
     except:
         await message.answer(text="Assalomu alaykum")
 
+
 @dp.message(F.new_chat_member)
 async def new_member(message:Message):
     user = message.new_chat_member.get("first_name")
-    await message.answer(f"{user} Guruhga xush kelibsiz!")
+    group_name = message.chat.title
+    await message.answer(f"{user} {group_name} guruhiga xush kelibsiz!")
     await message.delete()
 
 @dp.message(F.left_chat_member)
@@ -93,7 +120,7 @@ xaqoratli_sozlar = {"tentak","jinni"}
 
 @dp.message(and_f(F.chat.func(lambda chat: chat.type == "supergroup"),F.text ))
 async def tozalash(message:Message):
-    text = message.text
+    text = message.text 
     for soz in xaqoratli_sozlar:
         # print(soz,text.lower().find(soz))
         if text.lower().find(soz)!=-1 :
