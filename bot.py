@@ -57,9 +57,9 @@ async def start_command(message:Message):
     telegram_id = message.from_user.id
     try:
         db.add_user(full_name=full_name,telegram_id=telegram_id) #foydalanuvchi bazaga qo'shildi
-        await message.answer(text="Assalomu alaykum, botimizga hush kelibsiz")
+        await message.answer(text="Assalomu alaykum, botimizga hush kelibsiz.")
     except:
-        await message.answer(text="Assalomu alaykum")
+        await message.answer(text="Assalomu alaykum.")
 
 
 @dp.message(F.new_chat_member)
@@ -105,16 +105,16 @@ async def mute_user(message:Message):
     user_id =  message.reply_to_message.from_user.id
     permission = ChatPermissions(can_send_messages=False)
 
-    until_date = int(time()) + 60 # 1minut guruhga yoza olmaydi
+    until_date = int(time()) + 180 
     await message.chat.restrict(user_id=user_id,permissions=permission,until_date=until_date)
-    await message.answer(f"{message.reply_to_message.from_user.first_name} 1 minutga blocklandingiz")
+    await message.answer(f"{message.reply_to_message.from_user.first_name} 3 minutga blocklandingiz.")
 
 @dp.message(and_f(F.reply_to_message,F.text=="/unmute"))
 async def unmute_user(message:Message):
     user_id =  message.reply_to_message.from_user.id
     permission = ChatPermissions(can_send_messages=True)
     await message.chat.restrict(user_id=user_id,permissions=permission)
-    await message.answer(f"{message.reply_to_message.from_user.first_name} guruhga yoza olasiz")
+    await message.answer(f"{message.reply_to_message.from_user.first_name} guruhga yoza olasiz.")
 
 xaqoratli_sozlar = {"tentak","jinni"}
 
@@ -201,7 +201,7 @@ async def on_startup_notify(bot: Bot):
         except Exception as err:
             logging.exception(err)
 
-#bot ishga tushganini xabarini yuborish
+
 @dp.shutdown()
 async def off_startup_notify(bot: Bot):
     for admin in ADMINS:
@@ -212,10 +212,10 @@ async def off_startup_notify(bot: Bot):
 
 
 def setup_middlewares(dispatcher: Dispatcher, bot: Bot) -> None:
-    """MIDDLEWARE"""
+    
     from middlewares.throttling import ThrottlingMiddleware
 
-    # Spamdan himoya qilish uchun klassik ichki o'rta dastur. So'rovlar orasidagi asosiy vaqtlar 0,5 soniya
+
     dispatcher.message.middleware(ThrottlingMiddleware(slow_mode_delay=0.5))
 
 
